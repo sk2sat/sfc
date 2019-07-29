@@ -83,17 +83,63 @@ Emscriptenに対して読み込むファイルの指定をすることで，
 fread関数を呼ぶだけでフォントファイル\footnote{VGAテキストモードのエミュレーション時に用いるフォント．}
 とフロッピーディスクのイメージファイルを問題無く読み込むことができた．
 
-これにより，"emu.data"のようなバイナリファイルが生成され，
-このファイルに対してJavaScriptのFileSystem APIを用いてアクセスし，
+これにより，"emu.data"のようなバイナリファイルが生成される．
+ファイルアクセス時には，このファイルに対してJavaScriptのFileSystem APIを用いてアクセスし，
 Emscriptenの標準ライブラリにファイルのバイナリイメージが渡されることによって実現されている．
 
-\subsection{GUI}
+\subsection{画面描画}
 % pthreadがexperimental
 % glDrawPixelsが使えない
 % emscripten_loopが使えない
 % 最終的にやったこと
 
-\section{考察}
+次に取り組んだのが図\ref{emustruct}の左側の，画面描画部分の移植となる．
+
+自作エミュレータでの画面描画のエミュレーションは以下のような手順を踏んで行われている．
+
+\begin{enumerate}
+	\item paletteの設定(out命令により行われる)
+	\item VRAMの読み込み
+	\item RGBデータの生成
+	\item glDrawPixels()によりウィンドウに表示
+\end{enumerate}
+
+これらのうち，1以外はメインスレッドとは別のスレッドで実行される操作となっている．
+しかし，WebAssemblyにおけるpthread実装はまだproposalの段階であったため，
+定期的に2〜4の操作をメインスレッドで行うことで描画を行うことを考えた．
+だが，glDrawPixelsというOpenGLの関数がWebGLでサポートされていなかった
+\footnote{glDrawPixelsはOpenGL ES 2.0で削除された関数であり，WebGLはこの規格に相当するAPIを提供している．}
+他，main関数の実行中に描画(正確にはDOMへの操作)を更新するために必要なemscripten\_sleepというEmscriptenの関数をソースコード中に入れるとコンパイラが落ちる
+\footnote{コンパイルエラーではなく，コンパイラ中で何らかのassertが失敗しているようだったのだが，小さなプログラムでは再現しなかったため詳しい原因はよく分かっていない．}
+，といった問題があり，中々描画を行うことができなかった．
+
+そのため，main関数実行中の描画は諦め，
+エミュレーション終了時の画面の状態を描画することとし，
+RGBデータの描画はEM\_ASM\_というマクロを用いてmain関数から直接canvasに書き込むことで行うことにした．
+
+\begin{figure}[htbp]
+	\begin{center}
+		\includegraphics[width=8cm]{./demo.png}
+		\caption{実行の様子}
+		\label{demo}
+	\end{center}
+\end{figure}
+
+最終的に，図\ref{demo}のようにcanvasに対してエミュレーション終了時のVGAの描画データを書き込み，表示することができた．
+
+\section{まとめ}
+Emscriptenを用いることで，
+自作のエミュレータをコア部分を変更することなくブラウザに移植できることが分かった．
+また，
+
+今回は自作のエミュレータが動作するプラットフォームを増やすことを目的にこのような移植を行った．
+しかし，このエミュレータを開発した元々の目的は，
+普段何気なく使用しているコンピュータの動作原理を学ぶためであった．
+今期もそのために，FreeDOSを動作させることを目標として新規にエミュレータを開発する予定だったのだが，
+実装のための時間を中々作ることができなかったため，今回の発表はこのような形となった．
+
+そのため，来期以降は自作エミュレータへのメモリ保護機構やキーボード入力の実装や，
+FPGAでCPUを自作することで更に下のレイヤからコンピュータの動作原理を学ぶ，といったことを行いたいと考えている．
 
 \bibliographystyle{junsrt}
 \bibliography{resume}
