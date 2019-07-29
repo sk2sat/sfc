@@ -75,6 +75,16 @@ EmscriptenはWebAssembly向けのコンパイラだけではなく，
 これにより移植できたのは図\ref{emustruct}の中央のオレンジ色で示した部分にとどまった．
 
 \subsection{ファイル読み込み}
+移植できなかった部分のうち，
+図\ref{emustruct}の右側のファイル読み込みについては，
+Emscriptenに対して読み込むファイルの指定をすることで，
+fread関数を呼ぶだけでフォントファイル\footnote{VGAテキストモードのエミュレーション時に用いるフォント．}
+とフロッピーディスクのイメージファイルを問題無く読み込むことができた．
+
+これにより，"emu.data"のようなバイナリファイルが生成され，
+このファイルに対してJavaScriptのFileSystem APIを用いてアクセスし，
+Emscriptenの標準ライブラリにファイルのバイナリイメージが渡されることによって実現されている．
+
 \subsection{GUI}
 % pthreadがexperimental
 % glDrawPixelsが使えない
