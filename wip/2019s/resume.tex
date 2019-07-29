@@ -58,7 +58,28 @@ v86はターゲットアーキテクチャはx86のみだが，
 16bitリアルモード，一部のBIOSファンクション，32bitプロテクトモード
 のエミュレーションをすることができる\footnote{ただし，ページングはサポートしておらず，セグメンテーションについてもメモリ保護機能はほとんど実装されていない．}．
 
+\begin{figure}[htbp]
+	\begin{center}
+		\includegraphics[width=7.5cm]{./emu_struct.png}
+		\caption{自作エミュレータの構造}
+		\label{emustruct}
+	\end{center}
+\end{figure}
+
 \section{実装}
+EmscriptenはWebAssembly向けのコンパイラだけではなく，
+標準ライブラリやOpenGLなどの一部のライブラリをJavaScriptに移植したものを含んでいる．
+そのため，それらのライブラリのみを使用したアプリケーションはC/C++のコンパイラを"emcc"に指定するだけでブラウザ向けにビルドすることができる．
+
+しかし，それだけでは自作のエミュレータを移植することはできなかった．
+これにより移植できたのは図\ref{emustruct}の中央のオレンジ色で示した部分にとどまった．
+
+\subsection{ファイル読み込み}
+\subsection{GUI}
+% pthreadがexperimental
+% glDrawPixelsが使えない
+% emscripten_loopが使えない
+% 最終的にやったこと
 
 \section{考察}
 
