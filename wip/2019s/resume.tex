@@ -1,6 +1,7 @@
 \documentclass[a4j,10pt]{jsarticle}
 \usepackage{layout,url,resume}
 \usepackage[dvipdfmx]{graphicx}
+\usepackage[dvipdfmx]{hyperref}
 \pagestyle{empty}
 
 \begin{document}
@@ -27,20 +28,19 @@ Emscriptenというフレームワークを用い，
 \section{背景}
 近年，WebAssemblyという，ブラウザ上で動作するアセンブリ風の低水準言語の開発が進められている．
 これにより，ブラウザ上でネイティブアプリケーション並の高速な計算を行うことができる．
-
 WebAssemblyはLLVM 8.0\footnote{2019/03/20リリース}で正式なターゲットとしてサポートされたこともあり，
 今後様々な場面で使われていくだろうと思われる．
 
-また，EmscriptenというLLVMを用いたフレームワークを用いることで，
+また，EmscriptenというLLVMを使ったフレームワークを用いることで，
 比較的簡単にC/C++で記述されたプログラムをブラウザ向けにビルドすることが可能になっている．
 
 そこで，あらゆるプラットフォームでの動作を目的として，
-今回は以前C++で開発したx86エミュレータをEmscriptenによりブラウザへ移植することを考えた．
+以前C++で開発したx86エミュレータをEmscriptenによりブラウザへ移植することを考えた．
 
 \section{関連研究}
 WebAssemblyを用いてエミュレータをブラウザ上で動作させるという発想は以前からあるもので，
-関連研究として，JSLinux\footnote{https://bellard.org/jslinux/}
-やv86\footnote{http://copy.sh/v86/}などが挙げられる．
+関連研究として，JSLinux\footnote{\cite{jslinux}}
+やv86\footnote{\cite{v86}}などが挙げられる．
 
 JSLinuxはQEMUの開発者であるFabrice Bellardが開発したもので，
 x86/riscv64をターゲットにしたLinux KernelやWindows 2000などをブラウザ上でエミュレーションすることができる．
@@ -51,20 +51,26 @@ v86はターゲットアーキテクチャはx86のみだが，
 
 \section{移植したエミュレータ}
 今回移植したエミュレータは高校2年生の頃にフルスクラッチで開発したもので，
-ソースコードはGitHubで公開している\footnote{https://github.com/sk2sat/emu}．
+ソースコードはGitHubで公開している．
+\footnote{https://github.com/sk2sat/emu}
 
 このエミュレータのターゲットアーキテクチャはx86であり，
 ユーザーアプリケーションの動作ではなく，
 「はりぼてOS」という教育用の小さなOSを動作させることを開発目標としていた．
 そのため，このエミュレータではまずフロッピーイメージを読み込み，
 16bitリアルモード，一部のBIOSファンクション，32bitプロテクトモード
-のエミュレーションをすることができる\footnote{ただし，ページングはサポートしておらず，セグメンテーションについてもメモリ保護機能はほとんど実装されていない．}．
+のエミュレーションをすることができる．
+\footnote{ただし，ページングはサポートしておらず，セグメンテーションについてもメモリ保護機能はほとんど実装されていない．}
+
+また，このエミュレータはCPUの仮想化支援機構などを用いず，
+オペコードの読み込み，ModRMのパース，メモリの読み書きといった操作をすべてソフトウェア上で外部ライブラリを用いずエミュレーションしている．
+そのため，図\ref{struct}の中央のオレンジ色で示したコア部分は手を入れることなく移植が可能と考えた．
 
 \begin{figure}[htbp]
 	\begin{center}
 		\includegraphics[width=7.5cm]{./emu_struct.png}
 		\caption{自作エミュレータの構造}
-		\label{emustruct}
+		\label{struct}
 	\end{center}
 \end{figure}
 
@@ -74,11 +80,12 @@ EmscriptenはWebAssembly向けのコンパイラだけではなく，
 そのため，それらのライブラリのみを使用したアプリケーションはC/C++のコンパイラを"emcc"に指定するだけでブラウザ向けにビルドすることができる．
 
 しかし，それだけでは自作のエミュレータを移植することはできなかった．
-これにより移植できたのは図\ref{emustruct}の中央のオレンジ色で示した部分にとどまった．
+これは図\ref{struct}の水色部分で示した，
+ライブラリ関数を使用してファイル読み込みや画面描画を行っている部分があるためである．
 
 \subsection{ファイル読み込み}
 移植できなかった部分のうち，
-図\ref{emustruct}の右側のファイル読み込みについては，
+図\ref{struct}の右側のファイル読み込みについては，
 Emscriptenに対して読み込むファイルの指定をすることで，
 fread関数を呼ぶだけでフォントファイル\footnote{VGAテキストモードのエミュレーション時に用いるフォント．}
 とフロッピーディスクのイメージファイルを問題無く読み込むことができた．
@@ -90,10 +97,10 @@ Emscriptenの標準ライブラリにファイルのバイナリイメージが�
 \subsection{画面描画}
 % pthreadがexperimental
 % glDrawPixelsが使えない
-% emscripten_loopが使えない
+% emscripten_sleepが使えない
 % 最終的にやったこと
 
-次に取り組んだのが図\ref{emustruct}の左側の，画面描画部分の移植となる．
+次に取り組んだのが図\ref{struct}の左側の，画面描画部分の移植となる．
 
 自作エミュレータでの画面描画のエミュレーションは以下のような手順を踏んで行われている．
 
@@ -109,13 +116,17 @@ Emscriptenの標準ライブラリにファイルのバイナリイメージが�
 定期的に2〜4の操作をメインスレッドで行うことで描画を行うことを考えた．
 だが，glDrawPixelsというOpenGLの関数がWebGLでサポートされていなかった
 \footnote{glDrawPixelsはOpenGL ES 2.0で削除された関数であり，WebGLはこの規格に相当するAPIを提供している．}
-他，main関数の実行中に描画(正確にはDOMへの操作)を更新するために必要なemscripten\_sleepというEmscriptenの関数をソースコード中に入れるとコンパイラが落ちる
+他，main関数の実行中に描画(正確にはDOMへの操作)を更新するために必要なemscripten\_sleepというEmscriptenの関数
+\footnote{公式ドキュメント\cite{emscripten-asyncify}に記載．}
+をソースコード中に入れるとコンパイラが落ちる
 \footnote{コンパイルエラーではなく，コンパイラ中で何らかのassertが失敗しているようだったのだが，小さなプログラムでは再現しなかったため詳しい原因はよく分かっていない．}
 ，といった問題があり，中々描画を行うことができなかった．
 
 そのため，main関数実行中の描画は諦め，
 エミュレーション終了時の画面の状態を描画することとし，
-RGBデータの描画はEM\_ASM\_というマクロを用いてmain関数から直接canvasに書き込むことで行うことにした．
+RGBデータの描画はEM\_ASM\_というマクロ
+\footnote{EM\_ASMはインラインJavaScriptと言えるような機能を持つEmscriptenが提供するマクロであり，は引数をとりC/C++の変数の値をJavaScript側に渡すことができるバージョンの同機能のマクロとしてEM\_ASM\_がある．}
+を用いてmain関数から直接canvasに書き込むことで行うことにした．
 
 \begin{figure}[htbp]
 	\begin{center}
@@ -141,8 +152,17 @@ Emscriptenを用いることで，
 そのため，来期以降は自作エミュレータへのメモリ保護機構やキーボード入力の実装や，
 FPGAでCPUを自作することで更に下のレイヤからコンピュータの動作原理を学ぶ，といったことを行いたいと考えている．
 
-\bibliographystyle{junsrt}
-\bibliography{resume}
+% \bibliographystyle{junsrt}
+% \bibliography{resume}
+
+\begin{thebibliography}{99}
+	\bibitem{jslinux}
+		\url{https://bellard.org/jslinux/}
+	\bibitem{v86}
+		\url{http://copy.sh/v86/}
+	\bibitem{emscripten-asyncify}
+		\url{https://emscripten.org/docs/porting/asyncify.html}
+\end{thebibliography}
 
 \end{document}
 % end of file
