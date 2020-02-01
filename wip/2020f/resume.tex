@@ -1,0 +1,88 @@
+\documentclass[a4j,10pt]{jsarticle}
+\usepackage{layout,url,resume}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage[dvipdfmx]{hyperref}
+\pagestyle{empty}
+
+\begin{document}
+%\layout
+
+\title{小型ハイブリッドロケット向けフライトシミュレータの開発}
+
+% 和文著者名
+\author{
+	Arch B1 坂本優太(sksat)
+}
+
+% 和文概要
+\begin{abstract}
+うんち
+\end{abstract}
+
+\maketitle
+\thispagestyle{empty}
+
+\section{背景}
+% COREとかいうのに入ってる
+% ハイブリッドロケット is 何
+% 安全審査 is 何
+
+\section{既存のシミュレータの問題点}
+
+% FROGSが如何にカスか
+% matlabだとインカレで困る
+% コードがカス: インデントなにそれおいしいの，関数ry
+% パラメータ入力がカス
+% 可視化もカス
+
+\section{先行事例}
+% FROGS, ForRocket, OpenTsiolokvsky
+% OpenRocketは先行事例 && 先行研究みがある
+% OpenRocketはプロトタイプには良いが
+
+\section{実装}
+
+\subsection{苦労した点}
+% MinGWがC++17にちゃんと対応してなくてカス
+% Windowsの浮動小数点演算精度が違う
+% なんかミスって全部NaN
+
+\section{評価}
+\subsection{定性的評価}
+% わあい使いやすいね
+
+\subsection{定量的評価}
+% 高速化
+% 近いところに落下分散
+% → 頂点到達後しばらくしてから意図しない回転があり，空力まわりにバグ？
+
+\section{今後の課題}
+% バグ修正
+% 風向風速制限表の自動生成(できたけど，不十分なのでもうちょいやる)
+% FROGS・3月大島データと定量的に比較して妥当性確認
+% 燃焼試験データオープンデータ化
+% 	既存フォーマットだと不十分，テキストだとサイズがデカい→独自フォーマット考案中
+% ペイロード・多段式ロケット実装
+% 高度11km以上上空の大気モデル
+% マッハ0.8対応
+% 精度保証付き数値計算？
+% パラメータ最適化
+
+\section{まとめ}
+
+% \bibliographystyle{junsrt}
+% \bibliography{resume}
+
+\begin{thebibliography}{99}
+	\bibitem{rocket-system}
+		田辺英二．ロケットシステム(1999)
+	\bibitem{rocket-propulsion-elements}
+		George P. Sutton. ; ロケット推進工学．望月晶訳．(1992)
+	\bibitem{hybrid-rocket-know-how}
+		import Avio．小型ハイブリッドロケットノウハウ vol.1．(2019)
+	\bibitem{numerical-calc-common-sense}
+		伊里正男，藤野和建．数値計算の常識．(1985)
+\end{thebibliography}
+
+\end{document}
+% end of file
